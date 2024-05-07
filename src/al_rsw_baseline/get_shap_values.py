@@ -16,7 +16,7 @@ from src.util.functions import log_msg
 def get_shap_values(df: pd.DataFrame, best_params: Dict, alloy: str = "AL5",) -> None:
     x_train, x_test, y_train, y_test = preprocess_data(df)
 
-    feature_names = ["current_max", "force_max", "weld_num", "sheets_thk",]
+    feature_names = ["current_max", "force_max", "weld_num", "sheets_thk", "room_temp",]
     x_train = pd.DataFrame(x_train, columns=feature_names)
     x_test = pd.DataFrame(x_test, columns=feature_names)
     y_train = pd.DataFrame(y_train, columns=["diameter"])
@@ -45,25 +45,44 @@ def get_shap_values(df: pd.DataFrame, best_params: Dict, alloy: str = "AL5",) ->
     shap.dependence_plot(
         "current_max", shap_values, x_test_shap, interaction_index="force_max", show=False, alpha=0.4, x_jitter=1,
     )
-    ax = plt.gca()
+    fig, ax = plt.gcf(), plt.gca()
     ax.set_ylim(-4, 4)
+    ax.set_ylabel("Effect on nugget diameter [mm]")
+    ax.set_xlabel("Max. current [kA]")
+    fig.axes[-1].set_ylabel('Max. force [kN]')
     plt.savefig(f'src/al_rsw_baseline/plots/{alloy}/dependence_plot_current_max.png', dpi=300)
 
     shap.dependence_plot(
         "force_max", shap_values, x_test_shap, interaction_index="current_max", show=False, alpha=0.4, x_jitter=0.2,
     )
-    ax = plt.gca()
+    fig, ax = plt.gcf(), plt.gca()
     ax.set_ylim(-4, 4)
+    ax.set_ylabel("Effect on nugget diameter [mm]")
+    ax.set_xlabel("Max. force [kN]")
+    fig.axes[-1].set_ylabel('Max. current [kA]')
     plt.savefig(f'src/al_rsw_baseline/plots/{alloy}/dependence_plot_force_max.png', dpi=300)
 
     shap.dependence_plot(
-        "sheets_thk", shap_values, x_test_shap, interaction_index="force_max", show=False, alpha=0.4, x_jitter=0.5,
+        "sheets_thk", shap_values, x_test_shap, interaction_index="current_max", show=False, alpha=0.4, x_jitter=0.5,
     )
-    ax = plt.gca()
+    fig, ax = plt.gcf(), plt.gca()
     ax.set_ylim(-4, 4)
     ax.set_xlim(1.75, 6.25)
+    ax.set_ylabel("Effect on nugget diameter [mm]")
+    ax.set_xlabel("Combination thk. [mm]")
+    fig.axes[-1].set_ylabel('Max. current [kA]')
     plt.savefig(f'src/al_rsw_baseline/plots/{alloy}/dependence_plot_sheets_thk.png', dpi=300)
 
+    shap.dependence_plot(
+        "room_temp", shap_values, x_test_shap, interaction_index="current_max", show=False, alpha=0.4, x_jitter=0.5,
+    )
+    fig, ax = plt.gcf(), plt.gca()
+    ax.set_ylim(-4, 4)
+    #ax.set_xlim(1.75, 6.25)
+    ax.set_ylabel("Effect on nugget diameter [mm]")
+    ax.set_xlabel("Room temperature [°C]")
+    fig.axes[-1].set_ylabel('Max. current [kA]')
+    plt.savefig(f'src/al_rsw_baseline/plots/{alloy}/dependence_plot_room_temp.png', dpi=300)
 
 def main():
     df_AL5 = pd.read_parquet("src/al_rsw_baseline/data/data_AL5.parquet")
